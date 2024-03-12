@@ -1,9 +1,9 @@
 package controllers
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -22,7 +22,9 @@ func TextController(c *gin.Context) {
 		if err != nil {
 			log.Fatal(err)
 		}
+		fmt.Println("exe", exe)
 		dir := filepath.Dir(exe)
+		fmt.Println("dir", dir)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -33,7 +35,10 @@ func TextController(c *gin.Context) {
 			log.Fatal(err)
 		}
 		fullpath := path.Join("uploads", filename+".txt")
-		err = ioutil.WriteFile(filepath.Join(dir, fullpath), []byte(json.Raw), 0644)
+		fmt.Println(dir)
+		fmt.Println(fullpath)
+		err = os.WriteFile(filepath.Join(dir, fullpath), []byte(json.Raw), 0644)
+		fmt.Println(json.Raw)
 		if err != nil {
 			log.Fatal(err)
 		}

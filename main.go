@@ -2,6 +2,9 @@ package main
 
 import (
 	"embed"
+	"example.com/m/server/controllers"
+	"example.com/m/server/initializers"
+	"github.com/gin-gonic/gin"
 	"io/fs"
 	"log"
 	"net/http"
@@ -9,18 +12,22 @@ import (
 	"os/exec"
 	"os/signal"
 	"strings"
-
-	"github.com/gin-gonic/gin"
 )
 
 //go:embed frontend/dist/*
 var FS embed.FS
 
+func GetPort() string {
+	return "27149"
+}
+
 func main() {
 	go func() {
 		gin.SetMode(gin.DebugMode)
 		router := gin.Default()
+		initializers.InitCors(router)
 		staticFile, _ := fs.Sub(FS, "frontend/dist")
+		router.POST("/api/v1/texts", controllers.TextController)
 		router.StaticFS("/static", http.FS(staticFile))
 		router.NoRoute(func(c *gin.Context) {
 			path := c.Request.URL.Path
@@ -40,17 +47,20 @@ func main() {
 				c.Status(http.StatusNotFound)
 			}
 		})
-		router.Run(":8080")
+		router.Run(":" + GetPort())
 	}()
 	// 先写死路径，后面再照着 lorca 改
 	chromePath := "C:\\Users\\林鹏涛\\AppData\\Local\\Google\\Chrome\\Application\\chrome.exe"
-	cmd := exec.Command(chromePath, "--app=http://127.0.0.1:8080/static/index.html")
+	cmd := exec.Command(chromePath, "--app=http://127.0.0.1:"+GetPort()+"/static/index.html")
 	cmd.Start()
 	chSignal := make(chan os.Signal, 1)
 	signal.Notify(chSignal, os.Interrupt)
 
 	select {
 	case <-chSignal:
-		cmd.Process.Kill()
+		err := cmd.Process.Kill()
+		if err != nil {
+			return
+		}
 	}
 }
