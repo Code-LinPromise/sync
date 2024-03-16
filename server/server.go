@@ -4,6 +4,7 @@ import (
 	"embed"
 	"example.com/m/config"
 	"example.com/m/server/controllers"
+	"example.com/m/server/initializers"
 	"example.com/m/server/ws"
 	"github.com/gin-gonic/gin"
 	"io/fs"
@@ -21,11 +22,12 @@ func Run() {
 
 	gin.SetMode(gin.DebugMode)
 	router := gin.Default()
+	initializers.InitCors(router)
 	staticFiles, _ := fs.Sub(FS, "frontend/dist")
 	router.POST("/api/v1/files", controllers.FilesController)
 	router.POST("/api/v1/texts", controllers.TextController)
 	router.GET("/api/v1/qrcodes", controllers.QrcodesController)
-	router.GET("/download/:path", controllers.DownloadController)
+	router.GET("/uploads/:path", controllers.DownloadController)
 	router.GET("/api/v1/addresses", controllers.AddressesController)
 	router.GET("/ws", func(c *gin.Context) {
 		ws.HttpController(c, hub)

@@ -1,36 +1,26 @@
 package main
 
 import (
-	"embed"
 	"example.com/m/config"
 	"example.com/m/server"
+	"github.com/zserge/lorca"
 	"os"
-	"os/exec"
 	"os/signal"
+	"syscall"
 )
 
-//go:embed frontend/dist/*
-var FS embed.FS
+////go:embed frontend/dist/*
+//var FS embed.FS
 
 func main() {
 	go server.Run()
-	cmd := startBrowser()
-	chSignal := listenToInterrupt()
-	select {
-	case <-chSignal:
-		cmd.Process.Kill()
-	}
-}
-func startBrowser() *exec.Cmd {
-	// 先写死路径，后面再照着 lorca 改
-	chromePath := "C:\\Users\\林鹏涛\\AppData\\Local\\Google\\Chrome\\Application\\chrome.exe"
-	cmd := exec.Command(chromePath, "--app=http://127.0.0.1:"+config.GetPort()+"/static/index.html")
-	cmd.Start()
-	return cmd
-}
-
-func listenToInterrupt() chan os.Signal {
+	var ui lorca.UI
+	ui, _ = lorca.New("http://127.0.0.1:"+config.GetPort()+"/static/index.html", "", 1280, 900, "--disable-sync", "--disable-translate", "--remote-allow-origins=*")
 	chSignal := make(chan os.Signal, 1)
-	signal.Notify(chSignal, os.Interrupt)
-	return chSignal
+	signal.Notify(chSignal, syscall.SIGINT, syscall.SIGTERM)
+	select {
+	case <-ui.Done():
+	case <-chSignal:
+	}
+	ui.Close()
 }
